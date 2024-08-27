@@ -1,0 +1,17 @@
+aws s3 mb s3://ec2-imagebuilders3-dev-automation-1 
+
+sam build --use-container 
+
+sam package \
+    --output-template-file packaged.yaml \
+    --s3-bucket ec2-imagebuilders3-dev-automation-1 
+sam deploy \
+    --template-file packaged.yaml \
+    --stack-name Ec2-Image-Builder-With-ASG-InstanceRefresh \
+    --capabilities CAPABILITY_IAM 
+
+sam delete \
+--stack-name Ec2-Image-Builder-With-ASG-InstanceRefresh
+
+
+aws s3 cp executebash/ s3://ec2-imagebuilders3-dev-automation-1/execute-test/ --recursive

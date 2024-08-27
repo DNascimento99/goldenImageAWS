@@ -1,0 +1,30 @@
+[
+    {
+      "ParameterKey": "EnvironmentName",
+      "ParameterValue": "dev"
+    },
+    {
+      "ParameterKey": "SampleLaunchTemplate",
+      "ParameterValue": "TemplateDev"
+    },
+    {
+      "ParameterKey": "SampleAutoScalingGroup",
+      "ParameterValue": "ASGDev"
+    },
+    {
+      "ParameterKey": "ImagePrefix",
+      "ParameterValue": "Ec2ImageBuilderAMI"
+    },
+    {
+      "ParameterKey": "SampleRegionName",
+      "ParameterValue": "us-east-1"
+    },
+    {
+      "ParameterKey": "ClusterName",
+      "ParameterValue": "ClusterDev"
+    },
+    {
+      "ParameterKey": "InfraAccount",
+      "ParameterValue": "211125387848"
+    }
+]

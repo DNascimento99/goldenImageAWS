@@ -1,0 +1,46 @@
+[
+    {
+        "ParameterKey": "EnvironmentName",
+        "ParameterValue": "dev"
+    },
+    {
+        "ParameterKey": "AmazonLinux2023EcsOptimizedAmiId",
+        "ParameterValue": "ami-05dc81a6311c42a6e"
+    },
+    {
+        "ParameterKey": "BuildInstanceType",
+        "ParameterValue": "t2.micro"
+    },
+    {
+        "ParameterKey": "PublicSubnet",
+        "ParameterValue": "subnet-073c19e5927bb8f26"
+    },
+    {
+        "ParameterKey": "DefaultSecurityGroup",
+        "ParameterValue": "sg-02af554760b1f446f"
+    },
+    {
+        "ParameterKey": "BucketName",
+        "ParameterValue": "arquive-bash-for-recipe-imagebuilder"
+    },
+    {
+        "ParameterKey": "AWSOrgID",
+        "ParameterValue": "o-ki9gpd1uvy"
+    },
+    {
+        "ParameterKey": "InvokeInstanceRefreshHandlerRole",
+        "ParameterValue": "RoleToInvoke-UpdateLaunchTemplateInstanceRefresh"
+    },
+    {
+        "ParameterKey": "LambdaInvokeName",
+        "ParameterValue": "LambdaForUpdateLaunchTemplate-And-InstanceRefresh"
+    },
+    {
+        "ParameterKey": "SampleRegionName",
+        "ParameterValue": "us-east-1"
+    },
+    {
+        "ParameterKey": "AccountOrganization",
+        "ParameterValue": "070830120172"
+    }
+]
