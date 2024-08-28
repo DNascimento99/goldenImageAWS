@@ -8,6 +8,7 @@ module "role" {
 
 module "events" {
   source = "./modules/eventBridge"
+  loggroup = module.cloudWatchLogs.loggroup
 }
 
 module "logs" {
@@ -16,5 +17,6 @@ module "logs" {
 
 module "alarms" {
   source = "./modules/cloudWatchAlarm"
+  eventbridge = module.eventBridge.eventbridge
 }
 
