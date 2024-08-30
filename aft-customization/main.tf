@@ -1,22 +1,9 @@
-module "lambda" {
-  source = "./modules/lambda"
+provider "aws" {
+  region = "us-east-1"
 }
 
-module "role" {
-  source = "./modules/role"
+module "lambda_function" {
+  source        = "./modules/lambda"
+  lambda_config = var.lambda_config
+  environment   = var.environment
 }
-
-module "events" {
-  source = "./modules/eventBridge"
-  loggroup = module.cloudWatchLogs.loggroup
-}
-
-module "logs" {
-  source = "./modules/cloudWatchLogs"
-}
-
-module "alarms" {
-  source = "./modules/cloudWatchAlarm"
-  eventbridge = module.eventBridge.eventbridge
-}
-
