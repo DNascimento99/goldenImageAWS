@@ -1,16 +1,16 @@
 environment = "dev"
 lambda_config = {
   "lambda_instanceRefresh" = {
-    function_name          = "LambdaForUpdateLaunchTemplate-And-InstanceRefresh"
-    description            = "Lambda for instance refresh in autoscaling"
-    handler                = "index.lambda_handler"
-    runtime                = "python3.12"
-    timeout = 120
-    create_role = true
+    function_name                 = "LambdaForUpdateLaunchTemplate-And-InstanceRefresh"
+    description                   = "Lambda for instance refresh in autoscaling"
+    handler                       = "index.lambda_handler"
+    runtime                       = "python3.12"
+    timeout                       = 120
+    create_role                   = true
     attach_cloudwatch_logs_policy = true
-    create_package         = false
-    attach_policy_json = true
-    local_existing_package = "./instanceRefresh.zip"
+    create_package                = false
+    attach_policy_json            = true
+    local_existing_package        = "./instanceRefresh.zip"
     environment_variables = {
       AutoScalingGroupName = "TemplateDev"
       LaunchTemplateName   = "ASGDev"
@@ -19,7 +19,7 @@ lambda_config = {
       RegionName           = "us-east-1"
       InfraAccountID       = "211125387848"
     }
-    policy_json = file("iam-policy.json") <<EOF
+    policy_json = <<EOF
 {
     "Version": "2012-10-17",
     "Statement": [
@@ -96,5 +96,24 @@ lambda_config = {
     ]
 }
 EOF
+  }
+}
+
+iam_role = {
+  "role_invoke_lambda" = {
+    role_name         = "RoleToInvoke-UpdateLaunchTemplateInstanceRefresh"
+    trusted_role_arns = ["arn:aws:iam::211125387848:root"]
+    create_role       = true
+    tags = {
+      environment = "dev"
+    }
+    inline_policy_statements = [{
+      actions = [
+        "lambda:InvokeFunction",
+        "lambda:InvokeAsync"
+      ]
+      effect    = "Allow"
+      resources = ["arn:aws:lambda:*:*:function:*"]
+    }]
   }
 }
