@@ -7,3 +7,7 @@ module "lambda_function" {
   lambda_config = var.lambda_config
   environment   = var.environment
 }
+module "role" {
+  source   = "./modules/role"
+  iam_role = var.iam_role
+}
