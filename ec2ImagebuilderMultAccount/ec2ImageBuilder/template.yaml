@@ -71,7 +71,7 @@ Resources:
     Type: 'AWS::Lambda::Function'
     Properties:
       Handler: index.lambda_handler
-      FunctionName: Lambda-Invoke-Another-LambdaInMultiAccout-For-InstanceRefresh
+      FunctionName: Lambda-Invoke-Another-LambdaInMultiAccout-For-InstanceRefresh-${EnvironmentName}
       Runtime: python3.8
       MemorySize: 128
       Timeout: 120

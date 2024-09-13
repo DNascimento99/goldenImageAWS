@@ -2,6 +2,7 @@ aws cloudformation create-stack \
     --stack-name InstanceRefreshForImageBuilder \
     --template-body file://template.yaml \
     --parameters file://parameters.json \
+    --region sa-east-1 \
     --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND
 
 aws cloudformation update-stack \

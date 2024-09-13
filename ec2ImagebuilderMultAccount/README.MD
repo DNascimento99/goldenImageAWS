@@ -1,129 +1,81 @@
-# Automação para criação de uma golden image utilizando Ec2 Image Builder
+# Automação para Criação de Golden Image Utilizando EC2 Image Builder
 
-Esse documento tem como objetivo explicar de forma resumida como construimos uma golden image utilizando Ec2 Image Builder, para deployar a nova AMI em um AutoScaling que fornece instâncias a um Cluster ECS e iniciar uma atualização de instâncias com rollback automatico baseado em eventos do ECS. \
-*Conforme diagrama:*
-![Diagrama](diagrama-multAccount.PNG)
-## Processo
-O processo terá a criação em uma conta de infraestrutura e automação nas contas de workload para utilização dessa imagem.
+Este documento descreve o processo de criação de uma golden image utilizando o EC2 Image Builder e a automação da aplicação dessa imagem em instâncias do Auto Scaling Group que servem a um Cluster ECS. O objetivo é garantir que novas AMIs sejam implantadas de forma automatizada e segura, com rollback automático em caso de falhas.
 
-Na conta de Infraestrutura temos o Ec2 Imagebuilder que será iniciado quando um eventbridge detectar eventos de *PutObject* em um determinado bucketS3(*esses objetos devem ser payloads no formato bash*) iniciará o processo de criação de uma AMI e compatilhará essa AMI com toda organização; Um SNS irá capturar o evento de lançamento da imagem e com isso irá invocar um lambda. Esse lambda irá invocar os lambdas nas contas de Workload, para que esses lambdas consigam atualizar o launchtemplate dos receptores dessa imagem, para que inicie-se uma atualização de instâncias com um rollback automatico. O rollback automatico basea-se em eventos do service ECS, onde se ocorrer algum erro relacionado a instância ou a AMI nova, um alarme será disparado iniciando-se o processo de rollback.
+## Sumário
 
-## Pre-Requisitos
+1. [Visão Geral](#visão-geral)
+2. [Criação do Componente EC2 Image Builder](#criação-do-componente-ec2-image-builder)
+3. [Template para Conta de Infraestrutura](#template-para-conta-de-infraestrutura)
+4. [Template para Contas de Workloads](#template-para-contas-de-workloads)
+5. [Pré-requisitos](#pré-requisitos)
+6. [Referências](#referências)
 
-1. CloudTrail: *Um cloudtrail para olhar eventos de um bucketS3*;
-2. Subnet Pública;
-3. Grupo de segurança: *Porta 443 aberta*;
-4. LaunchTemplate;
-5. Autoscaling;
-6. Cluster ECS;
+---
 
-### Template para conta de infraestrutura
-Este template CloudFormation cria uma infraestrutura para a atualização automática de AMIs (Amazon Machine Images) em um Auto Scaling Group utilizando o EC2 ImageBuilder. Ele inclui uma função Lambda que automatiza o processo de atualização de Launch Templates e inicia o processo de Instance Refresh no Auto Scaling Group.
-Parâmetros
+## Visão Geral
 
-* EnvironmentName: O nome do ambiente. Padrão: "".
-* AmazonLinux2023EcsOptimizedAmiId: O ID da AMI otimizada para ECS. Padrão: "".
-* BuildInstanceType: O tipo de instância para o Image Builder. Padrão: "".
-* PublicSubnet: O ID da subnet pública. Padrão: "".
-* DefaultSecurityGroup: O ID do grupo de segurança padrão para o Image Builder. Padrão: "".
-* BucketName: O nome do bucket para carregar o payload. Padrão: "".
-* AWSOrgID: O ID da organização. Padrão: "".
-* InvokeInstanceRefreshHandlerRole: O nome da role Lambda para invocar o Instance Refresh. Padrão: "".
-* AccountOrganization: O ID da organização da conta. Padrão: "".
+O processo de criação da golden image envolve os seguintes passos:
 
-**Recursos**
+1. **Criação da AMI**: Utiliza o EC2 Image Builder para criar uma AMI com base em um componente personalizado.
+2. **Automatização da Atualização**: Um Lambda é acionado para atualizar o Launch Template dos recursos e iniciar a atualização das instâncias.
+3. **Rollback Automático**: Em caso de falhas, um alarme do CloudWatch aciona um rollback para a versão anterior da AMI.
 
-*Lambda Function:* InvokeLambdaHandler
-* *Uma função Lambda responsável por: \
-    Listar todas as contas na organização.\
-    Assumir a role nas contas e invocar uma função Lambda em cada conta.\
-    Iniciar o processo de Instance Refresh no Auto Scaling Group.* 
+![Diagrama do Processo](diagrama-multAccount.PNG)
 
-**Propriedades:**
-*FunctionName:* Lambda-Invoke-Another-LambdaInMultiAccout-For-InstanceRefresh\
-*Handler: lambda_function.lambda_handler\
-Runtime: python3.8\
-MemorySize: 128\
-Timeout: 120*\
+---
 
-*IAM Role:* InvokeHandlerLambdaRole
-* *Uma role IAM associada à função Lambda, permitindo que ela realize as seguintes ações:\
-Acesso total ao EC2 (AmazonEC2FullAccess).\
-Gerenciamento de logs no CloudWatch.\
-Atualização e gerenciamento de Auto Scaling Groups.\
-Criação de versões de Launch Templates.\
-Acesso a recursos S3.\
-Criação de alarmes no CloudWatch.\
-Passagem de roles para o serviço EC2.*
+## Criação do Componente EC2 Image Builder
 
-*IAM Role:* InvokeInstanceRefreshHandlerRole 
-* *Uma role IAM criada para permitir a invocação da função Lambda de atualização doLaunch Template e Instance Refresh de outra conta.*
+O componente do EC2 Image Builder define as ações realizadas durante a construção da imagem. O objetivo do componente é automatizar a instalação e configuração de softwares necessários, como o Apache web server, e executar scripts específicos.
 
-*EventBridge Rule:* EventBridgeForEventsS3
-* *Regra do EventBridge que captura eventos de erro de serviços e tarefas no ECS e direciona para um Log Group.*
+### Objetivo do Componente
 
-*CloudWatch Log Group:* LogGroupforCollectEventsOfServiceECS
-* *Grupo de logs para armazenar eventos capturados pelo EventBridge.*
+1. **Criar e Executar Scripts**: Configura um script bash para executar outros scripts localizados em um diretório específico.
+2. **Criar Diretório**: Cria um diretório no sistema de arquivos para armazenar e executar scripts.
+3. **Baixar Arquivos do S3**: Baixa arquivos necessários de um bucket S3 e os coloca no diretório criado.
+4. **Executar Scripts**: Executa scripts de configuração após a criação do diretório e o download dos arquivos.
 
-*CloudWatch Alarm:* EventBridgeAlarmForEventsECS
-* *Alarme do CloudWatch que é acionado com base nos eventos de erro do ECS capturados pelo EventBridge.*
+---
 
-#### Uso
+## Template para Conta de Infraestrutura
 
-**Especifique os valores dos parâmetros no arquivo *parametes.json* ao criar a stack CloudFormation.\
-O Lambda será automaticamente acionado para atualizar o Launch Template e iniciar o Instance Refresh com base na AMI mais recente encontrada com o prefixo especificado.\
-Eventos de erro no ECS serão capturados e registrados no CloudWatch Logs e, se necessário, acionarão o alarme configurado.**
+Este template CloudFormation configura a infraestrutura para atualizar automaticamente as AMIs em um Auto Scaling Group. Inclui uma função Lambda que atualiza o Launch Template dos recursos e inicia o Instance Refresh.  
+[Recursos para as contas de infraestrutura](ec2ImageBuilder/template.yaml)
 
-### Template para contas de workloads
+### Recursos Incluídos
 
-Este template CloudFormation cria uma infraestrutura para atualização automática de AMIs (Amazon Machine Images) em um Auto Scaling Group usando o EC2 ImageBuilder. Ele inclui uma função Lambda que automatiza o processo de atualização de Launch Templates e inicia o processo de Instance Refresh no Auto Scaling Group.
-Parâmetros
+- **Lambda Function**: `InvokeLambdaHandler` - Automatiza a atualização do Launch Template e inicia o Instance Refresh.
+- **IAM Role**: `InvokeHandlerLambdaRole` - Permite que a função Lambda invoque funções em outras contas e execute ações necessárias.
+- **IAM Role**: `InvokeInstanceRefreshHandlerRole` - Permite que a função Lambda atualize o Launch Template e inicie o Instance Refresh.
+- **EventBridge Rule**: `EventBridgeForEventsS3` - Captura eventos de erro de serviços e tarefas no ECS.
+- **CloudWatch Log Group**: `LogGroupforCollectEventsOfServiceECS` - Armazena eventos capturados pelo EventBridge.
+- **CloudWatch Alarm**: `EventBridgeAlarmForEventsECS` - Aciona um rollback em caso de falhas detectadas durante o processo de atualização.
 
-* EnvironmentName: O nome do ambiente. Padrão: "".
-* SampleLaunchTemplate: O ID do modelo de inicialização (Launch Template) que será atualizado. Padrão: "".
-* SampleAutoScalingGroup: O nome do Auto Scaling Group que será atualizado. Padrão: "".
-* ImagePrefix: O prefixo do nome da imagem (AMI) que o Lambda usará para encontrar a imagem mais recente para atualizar o Launch Template. Padrão: "".
-* ClusterName: O nome do cluster ECS padrão para coleta de eventos. Padrão: "".
-* InfraAccount: O ID da conta de infraestrutura onde os recursos do ImageBuilder estão presentes. Padrão: "".
+---
 
-**Recursos** \
-*Lambda Function:* InstanceRefreshHandler
-* *Uma função Lambda responsável por: \
-Obter a AMI mais recente com base em um prefixo especificado. \
-Atualizar o Launch Template com a nova AMI, se necessário. \
-Atualizar o Auto Scaling Group para usar a nova versão do Launch Template. \
-Iniciar o processo de Instance Refresh no Auto Scaling Group.*
+## Template para Contas de Workloads
 
-**Propriedades:**
-* *FunctionName*: LambdaForUpdateLaunchTemplate-And-InstanceRefresh \
-*Handler: lambda_function.lambda_handler \
-Runtime: python3.8 \
-MemorySize: 128 \
-Timeout: 30 \
-Role: Role com permissões necessárias para execução da função Lambda.*
+Este template é utilizado nas contas de workloads para associar a nova AMI aos Auto Scaling Groups e realizar o Instance Refresh.  
+[Recursos para contas de workloads](lambdaForInstanceRefresh//template.yaml)
 
-*IAM Role*: InstanceRefreshHandlerLambdaRole 
-* *Uma role IAM associada à função Lambda, permitindo que ela realize as seguintes ações:\
-Acesso total ao EC2 (AmazonEC2FullAccess).\
-Gerenciamento de logs no CloudWatch.\
-Atualização e gerenciamento de Auto Scaling Groups.\
-Criação de versões de Launch Templates.\
-Acesso a recursos S3.\
-Criação de alarmes no CloudWatch.\
-Passagem de roles para o serviço EC2.*
+### Recursos Incluídos
 
-*IAM Role*: InvokeInstanceRefreshHandlerRole
-* *Uma role IAM criada para permitir a invocação da função Lambda de atualização do Launch Template e Instance Refresh de outra conta.
-EventBridge Rule: EventBridgeForEventsECS*
+- **Auto Scaling Group**: Configurado para utilizar o Launch Template com a nova AMI.
+- **ECS Cluster**: Configuração do cluster para garantir que os serviços estejam saudáveis após o Instance Refresh.
 
-**Regra do EventBridge que captura eventos de erro de serviços e tarefas no ECS e direciona para um Log Group.** \
-*CloudWatch Log Group*: LogGroupforCollectEventsOfServiceECS 
-* *Grupo de logs para armazenar eventos capturados pelo EventBridge.*
+---
 
-*CloudWatch Alarm*: EventBridgeAlarmForEventsECS 
-* *Alarme do CloudWatch que é acionado com base nos eventos de erro do ECS capturados pelo EventBridge.*
-#### Uso 
+## Pré-requisitos
 
-**Especifique os valores dos parâmetros no arquivo *parametes.json* ao criar a stack CloudFormation. \
-O Lambda será automaticamente acionado para atualizar o Launch Template e iniciar o Instance Refresh com base na AMI mais recente encontrada com o prefixo especificado.\
-Eventos de erro no ECS serão capturados e registrados no CloudWatch Logs e, se necessário, acionarão o alarme configurado.**
+- **Bucket S3**: Certifique-se de que o bucket S3 necessário está criado e contém os arquivos de script e configuração.
+- **IAM Roles**: As roles necessárias para as funções Lambda devem estar configuradas com as permissões adequadas.
+- **EventBridge e CloudWatch**: Configure as regras e alarmes necessários para monitorar e responder a falhas durante o processo de atualização.
+
+---
+
+## Referências
+
+- [Documentação EC2 Image Builder](https://docs.aws.amazon.com/imagebuilder/latest/userguide/what-is-image-builder.html)
+- [CloudFormation Template Syntax](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/template-reference.html)
+- [Automação de Atualização com Auto Scaling Groups e ECS](https://docs.aws.amazon.com/autoscaling/latest/userguide/what-is-auto-scaling.html)
