@@ -170,7 +170,7 @@ Resources:
                   update_launch_templates(region, lt_name, latest_ami_id)
                   
                   # Passo 3: Atualizar o Auto Scaling Group para usar a nova versão do Launch Template
-                  set_asg_launch_template_version(asg_name, lt_name, '3')
+                  set_asg_launch_template_version(asg_name, lt_name, '16')
                   
                   # Passo 4: Iniciar o processo de Instance Refresh para atualizar as instâncias no ASG
                   trigger_auto_scaling_instance_refresh(asg_name, lt_name)
@@ -179,6 +179,7 @@ Resources:
               except ClientError as e:
                   logging.error("Error during the update and refresh process: {}".format(e))
                   return "Error during the update and refresh process: {}".format(e)   
+   
       Environment:
         Variables:
           AutoScalingGroupName: !Ref SampleAutoScalingGroup

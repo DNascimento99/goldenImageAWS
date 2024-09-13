@@ -1,31 +1,31 @@
 [
     {
         "ParameterKey": "EnvironmentName",
-        "ParameterValue": "dev"
+        "ParameterValue": ""
     },
     {
         "ParameterKey": "AmazonLinux2023EcsOptimizedAmiId",
-        "ParameterValue": "ami-05dc81a6311c42a6e"
+        "ParameterValue": "ami-0be94f56bdd19fa7b"
     },
     {
         "ParameterKey": "BuildInstanceType",
-        "ParameterValue": "t2.micro"
+        "ParameterValue": ""
     },
     {
         "ParameterKey": "PublicSubnet",
-        "ParameterValue": "subnet-073c19e5927bb8f26"
+        "ParameterValue": ""
     },
     {
         "ParameterKey": "DefaultSecurityGroup",
-        "ParameterValue": "sg-02af554760b1f446f"
+        "ParameterValue": ""
     },
     {
         "ParameterKey": "BucketName",
-        "ParameterValue": "arquive-bash-for-recipe-imagebuilder"
+        "ParameterValue": ""
     },
     {
         "ParameterKey": "AWSOrgID",
-        "ParameterValue": "o-ki9gpd1uvy"
+        "ParameterValue": ""
     },
     {
         "ParameterKey": "InvokeInstanceRefreshHandlerRole",
@@ -37,10 +37,10 @@
     },
     {
         "ParameterKey": "SampleRegionName",
-        "ParameterValue": "us-east-1"
+        "ParameterValue": ""
     },
     {
         "ParameterKey": "AccountOrganization",
-        "ParameterValue": "070830120172"
+        "ParameterValue": ""
     }
 ]

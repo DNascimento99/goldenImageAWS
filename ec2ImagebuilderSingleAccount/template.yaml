@@ -5,43 +5,43 @@ Description: 'Create EC2 ImageBuilder with lambda for execution in the instancer
 Parameters:
   EnvironmentName:
     Type: String
-    Default: "EC2 Image Builder Sample"
+    Default: ""
     Description: "The name of the environment"
   AmazonLinux2023EcsOptimizedAmiId:
     Type: String
-    Default: "ami-05dc81a6311c42a6e" 
+    Default: "" 
     Description: "The ID of the Amazon Optimized for ECS"
   BuildInstanceType:
     Type: String
-    Default: "t2.micro"
+    Default: ""
     Description: "The instance type for Image Builder"
   SampleLaunchTemplate:
     Type: String
-    Default: 'lt-037c0c60e5b729431' 
+    Default: '' 
     Description: "The ID of the sample launch template"
   SampleAutoScalingGroup:
     Type: String
-    Default: 'ASGDev' 
+    Default: '' 
     Description: "The name of the sample Auto Scaling group"
   PublicSubnet:
     Type: String
-    Default: 'subnet-08bc50a595ea13af9' 
+    Default: '' 
     Description: "The ID of the public subnet"
   DefaultSecurityGroup:
     Type: String
-    Default: "sg-0fb049bbf54425e43" 
+    Default: "" 
     Description: "The ID of the default security group for Image Builder"
   ClusterName:
     Type: String
-    Default: "ClusterDev" 
+    Default: "" 
     Description: "The Name of the default cluster for collect events ecs"
   BucketName:
     Type: String
-    Default: "ec2-imagebuilders3-dev-automation-1" 
+    Default: "" 
     Description: "The bucket name for load payload"
   PreFixName:
     Type: String
-    Default: "execute-test" 
+    Default: "" 
     Description: "The Prefix name for load payload"
 
 Resources:
